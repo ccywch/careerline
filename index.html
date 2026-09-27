@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Careerline — career paths as metro lines</title>
+  <meta name="description" content="Careerline is a Chrome extension that turns any LinkedIn profile into a beautiful metro-line career map — and lets you compare it with your own, year by year. Everything runs in your browser.">
+  <link rel="icon" href="icon.png">
+  <style>
+    @font-face { font-family: 'Geist'; font-weight: 400; src: url('Geist_400_normal.woff2') format('woff2'); font-display: swap; }
+    @font-face { font-family: 'Geist'; font-weight: 600; src: url('Geist_600_normal.woff2') format('woff2'); font-display: swap; }
+    @font-face { font-family: 'Geist'; font-weight: 700; src: url('Geist_700_normal.woff2') format('woff2'); font-display: swap; }
+    @font-face { font-family: 'Bricolage Grotesque'; font-weight: 400 800; src: url('Bricolage_Grotesque_400_800_normal.woff2') format('woff2'); font-display: swap; }
+    @font-face { font-family: 'Instrument Serif'; font-style: italic; font-weight: 400; src: url('Instrument_Serif_400_italic.woff2') format('woff2'); font-display: swap; }
+
+    :root {
+      --bg: #FAF8F3; --panel: #FFFFFF; --ink: #15141A; --sub: #3E3B44; --muted: #5F5B66;
+      --hairline: #E9E5DC; --accent: #FFA766;
+      --l1: #1F9E77; --l2: #1B8FC4; --l3: #E08A1E; --l4: #C94C8A; --l5: #E0572E;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #121116; --panel: #1F1D24; --ink: #F3F1EC; --sub: #CFCAD6; --muted: #A9A4B2; --hairline: #2E2B35; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--ink); font: 16px/1.55 'Geist', system-ui, sans-serif; }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 22px; }
+
+    header { padding: 26px 0; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+    .brand img { width: 30px; height: 30px; border-radius: 8px; }
+    .brand em { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-weight: 400; font-size: 22px; }
+    .pill { font-size: 13px; color: var(--muted); border: 1.5px solid var(--hairline); border-radius: 999px; padding: 7px 14px; }
+
+    .hero { padding: 54px 0 30px; text-align: center; }
+    h1 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: clamp(38px, 7vw, 66px); line-height: 1.04; letter-spacing: -0.02em; }
+    h1 .line { display: inline-block; background: linear-gradient(90deg, var(--l1), var(--l2), var(--l3), var(--l4), var(--l5)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .tagline { margin: 18px auto 0; max-width: 620px; font-size: 19px; color: var(--sub); }
+    .cta { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 15px; text-decoration: none; }
+    .btn-primary { background: var(--ink); color: var(--bg); }
+    .btn-ghost { border: 1.5px solid var(--hairline); color: var(--ink); }
+    .soon { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+    .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; padding: 36px 0 10px; }
+    .shot { background: var(--panel); border: 1px solid var(--hairline); border-radius: 18px; padding: 12px; }
+    .shot img { width: 100%; border-radius: 10px; display: block; }
+    .shot figcaption { font-size: 13px; color: var(--muted); padding: 10px 4px 2px; text-align: center; }
+
+    section { padding: 44px 0; border-top: 1px solid var(--hairline); }
+    h2 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 30px; margin-bottom: 20px; letter-spacing: -0.01em; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+    .card { background: var(--panel); border: 1px solid var(--hairline); border-radius: 16px; padding: 22px; }
+    .card .dot { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; margin-bottom: 12px; }
+    .card h3 { font-size: 17px; margin-bottom: 8px; font-weight: 700; }
+    .card p { font-size: 14.5px; color: var(--sub); }
+
+    .pricing { display: flex; gap: 18px; flex-wrap: wrap; }
+    .price { flex: 1; min-width: 250px; }
+    .price .amount { font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; font-weight: 800; }
+    .price .amount small { font-size: 15px; font-weight: 500; color: var(--muted); }
+    .price ul { list-style: none; margin-top: 12px; font-size: 14.5px; color: var(--sub); }
+    .price li { padding: 4px 0; }
+    .price li::before { content: '✓ '; color: var(--l1); font-weight: 700; }
+    .premium-card { background: #15141A; color: #F3F1EC; border-color: #15141A; }
+    .premium-card li::before { color: var(--accent); }
+    .premium-card .tag { color: var(--accent); font-family: monospace; font-size: 12px; letter-spacing: 0.08em; }
+
+    .privacy p { max-width: 720px; color: var(--sub); margin-bottom: 12px; }
+    footer { border-top: 1px solid var(--hairline); padding: 26px 0 40px; font-size: 13.5px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><img src="icon.png" alt="Careerline logo">Career<em>line</em></div>
+      <span class="pill">Chrome extension</span>
+    </header>
+
+    <div class="hero">
+      <h1>Careers, drawn as<br><span class="line">metro lines.</span></h1>
+      <p class="tagline">Careerline turns any LinkedIn profile into a beautiful metro-map of a career — stations for every role, branches for side tracks — and lets you compare it with your own, year by year.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#pricing">See pricing</a>
+        <a class="btn btn-ghost" href="mailto:wchccy@gmail.com">Contact</a>
+      </div>
+      <p class="soon">Coming soon to the Chrome Web Store.</p>
+    </div>
+
+    <div class="shots">
+      <figure class="shot"><img src="shot-path-light.png" alt="A career path drawn as a metro line"><figcaption>Any profile becomes a metro line</figcaption></figure>
+      <figure class="shot"><img src="shot-path-dark.png" alt="Dark mode career path with side branches"><figcaption>Side roles branch off — dark mode included</figcaption></figure>
+      <figure class="shot"><img src="shot-compare.png" alt="Two careers compared side by side"><figcaption>Compare with me, aligned by career year</figcaption></figure>
+      <figure class="shot"><img src="shot-sharecard.png" alt="Shareable story image of a comparison"><figcaption>Share-ready images with a QR code</figcaption></figure>
+    </div>
+
+    <section>
+      <h2>What it does</h2>
+      <div class="features">
+        <div class="card"><div class="dot" style="background:var(--l1)">1</div><h3>Career path</h3><p>Open any LinkedIn profile and see the whole journey at a glance: education dotted, employers color-coded, concurrent roles as branches — like a transit map of a life.</p></div>
+        <div class="card"><div class="dot" style="background:var(--l2)">2</div><h3>Compare with me</h3><p>Save your own profile once (it stays in your browser). Then compare any career with yours, aligned by career year — Year 0 is your graduation, theirs is theirs.</p></div>
+        <div class="card"><div class="dot" style="background:var(--l5)">3</div><h3>Share the picture</h3><p>Export story, square, or link-card images — drawn locally in your browser, with names, photos, and a QR code to the profile. Or hide the other person with one toggle.</p></div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <h2>Pricing</h2>
+      <div class="pricing">
+        <div class="card price">
+          <div class="amount">Free</div>
+          <ul><li>3 views per day</li><li>Career path &amp; Compare with me</li><li>Share images</li></ul>
+        </div>
+        <div class="card price premium-card">
+          <span class="tag">PREMIUM</span>
+          <div class="amount">$5 <small>one-time</small></div>
+          <ul><li>Everything in Free</li><li>Unlimited views, forever</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="privacy">
+      <h2>Private by design</h2>
+      <p>Careerline is a pure front-end extension. Profiles are read in your own browser session, drawings are rendered locally, and your saved profile never leaves your machine. There is no Careerline server and no analytics.</p>
+      <p>Payments are processed by Stripe via ExtensionPay; Careerline never sees your card details.</p>
+      <p><strong>Careerline is an independent product and is not affiliated with, endorsed by, or sponsored by LinkedIn.</strong></p>
+    </section>
+
+    <footer>
+      <span>© 2026 Careerline</span>
+      <span>Support: <a href="mailto:wchccy@gmail.com">wchccy@gmail.com</a></span>
+    </footer>
+  </div>
+</body>
+</html>
